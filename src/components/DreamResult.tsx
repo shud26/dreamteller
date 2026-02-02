@@ -1,18 +1,22 @@
 'use client'
 
+import { useState } from 'react'
+
 interface DreamResultProps {
   result: string
+  dream: string
   onReset: () => void
 }
 
-export default function DreamResult({ result, onReset }: DreamResultProps) {
-  const shareText = `나의 꿈 해몽 결과를 확인해보세요! DreamTeller에서 AI가 분석한 꿈의 의미`
-  
+export default function DreamResult({ result, dream, onReset }: DreamResultProps) {
+  const [premiumResult, setPremiumResult] = useState<string | null>(null)
+  const [premiumLoading, setPremiumLoading] = useState(false)
+
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
         title: 'DreamTeller - AI 꿈해몽',
-        text: shareText,
+        text: '나의 꿈 해몽 결과를 확인해보세요!',
         url: window.location.href,
       })
     } else {
@@ -21,52 +25,104 @@ export default function DreamResult({ result, onReset }: DreamResultProps) {
     }
   }
 
+  const handlePremium = async () => {
+    setPremiumLoading(true)
+    try {
+      const res = await fetch('/api/interpret-premium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dream, paymentVerified: true }), // 테스트용
+      })
+      const data = await res.json()
+      setPremiumResult(data.interpretation)
+    } catch (error) {
+      console.error('Premium Error:', error)
+      alert('프리미엄 해몽 중 오류가 발생했습니다.')
+    } finally {
+      setPremiumLoading(false)
+    }
+  }
+
+  // 프리미엄 결과 보여주기
+  if (premiumResult) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center">
+          <p className="text-yellow-400 text-sm tracking-widest mb-2">PREMIUM REPORT</p>
+          <h2 className="text-2xl text-white font-light">프리미엄 꿈 해석</h2>
+        </div>
+
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/10 to-transparent rounded-2xl" />
+          <div className="relative bg-black/20 rounded-2xl p-8 border border-yellow-500/30">
+            <div className="text-gray-200 leading-loose whitespace-pre-wrap prose prose-invert max-w-none">
+              {premiumResult}
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={onReset}
+          className="w-full py-4 rounded-xl text-white/70 border border-white/20
+                     hover:bg-white/5 transition-colors"
+        >
+          새로운 꿈 해몽하기
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* 결과 헤더 */}
       <div className="text-center">
-        <span className="text-4xl mb-4 block">✨</span>
-        <h2 className="text-xl text-white mb-2">꿈 해몽 결과</h2>
+        <p className="text-purple-400 text-sm tracking-widest mb-2">INTERPRETATION</p>
+        <h2 className="text-2xl text-white font-light">당신의 꿈이 말하는 것</h2>
       </div>
 
       {/* 무료 결과 */}
-      <div className="bg-black/30 rounded-xl p-6 border border-purple-500/30">
-        <p className="text-gray-200 whitespace-pre-wrap leading-relaxed">
-          {result}
-        </p>
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 to-transparent rounded-2xl" />
+        <div className="relative bg-black/20 rounded-2xl p-8 border border-white/10">
+          <p className="text-gray-200 text-lg leading-loose whitespace-pre-wrap">
+            {result}
+          </p>
+        </div>
       </div>
 
       {/* 프리미엄 유도 */}
-      <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 rounded-xl p-6 border border-purple-500/50">
-        <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
-          <span>🌟</span> 더 자세한 해몽을 원하시나요?
-        </h3>
-        <ul className="text-gray-300 text-sm space-y-1 mb-4">
-          <li>• 상세한 심리 분석</li>
-          <li>• 행운의 숫자 & 색상</li>
-          <li>• 오늘의 조언</li>
-          <li>• PDF 리포트 다운로드</li>
-        </ul>
-        <button className="w-full py-3 bg-gradient-to-r from-yellow-500 to-orange-500 
-                         rounded-lg text-white font-semibold hover:opacity-90 transition-opacity">
-          프리미엄 해몽 ($2.99)
+      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+        <p className="text-white font-medium mb-3">더 깊은 해석이 궁금하신가요?</p>
+        <p className="text-gray-400 text-sm mb-5 leading-relaxed">
+          심리 분석, 행운의 숫자, 오늘의 조언까지<br/>
+          프리미엄 리포트로 확인하세요.
+        </p>
+        <button
+          onClick={handlePremium}
+          disabled={premiumLoading}
+          className="w-full py-4 bg-white text-black font-medium
+                     rounded-xl hover:bg-gray-100 transition-colors
+                     disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {premiumLoading ? '해석 중...' : '프리미엄 해몽 받기 — 테스트'}
         </button>
       </div>
 
       {/* 버튼들 */}
-      <div className="flex gap-4">
+      <div className="flex gap-3">
         <button
           onClick={onReset}
-          className="flex-1 py-3 border border-purple-500/50 rounded-xl text-purple-400 
-                     hover:bg-purple-500/10 transition-colors"
+          className="flex-1 py-4 rounded-xl text-white/70 border border-white/20
+                     hover:bg-white/5 transition-colors"
         >
-          다른 꿈 해몽하기
+          다시 해몽하기
         </button>
         <button
           onClick={handleShare}
-          className="flex-1 py-3 border border-pink-500/50 rounded-xl text-pink-400 
-                     hover:bg-pink-500/10 transition-colors"
+          className="flex-1 py-4 rounded-xl text-white/70 border border-white/20
+                     hover:bg-white/5 transition-colors"
         >
-          결과 공유하기
+          공유하기
         </button>
       </div>
     </div>

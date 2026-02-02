@@ -11,7 +11,7 @@ export default function Home() {
 
   const handleSubmit = async () => {
     if (!dream.trim()) return
-    
+
     setLoading(true)
     try {
       const res = await fetch('/api/interpret', {
@@ -30,40 +30,43 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6">
       {/* 헤더 */}
-      <div className="text-center mb-12">
-        <h1 className="text-5xl md:text-6xl font-bold gradient-text mb-4">
-          DreamTeller
+      <div className="text-center mb-16">
+        <h1 className="text-5xl md:text-6xl font-extralight text-white tracking-tight mb-3">
+          Dream<span className="text-purple-400">Teller</span>
         </h1>
-        <p className="text-gray-400 text-lg">
-          AI가 분석하는 당신의 꿈 이야기
+        <p className="text-gray-500">
+          AI가 읽어주는 꿈의 의미
         </p>
       </div>
 
       {/* 메인 카드 */}
-      <div className="w-full max-w-2xl card-glow rounded-2xl p-8">
-        {!result ? (
-          <DreamInput 
-            dream={dream}
-            setDream={setDream}
-            onSubmit={handleSubmit}
-            loading={loading}
-          />
-        ) : (
-          <DreamResult 
-            result={result}
-            onReset={() => {
-              setResult(null)
-              setDream('')
-            }}
-          />
-        )}
+      <div className="w-full max-w-xl">
+        <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10">
+          {!result ? (
+            <DreamInput
+              dream={dream}
+              setDream={setDream}
+              onSubmit={handleSubmit}
+              loading={loading}
+            />
+          ) : (
+            <DreamResult
+              result={result}
+              dream={dream}
+              onReset={() => {
+                setResult(null)
+                setDream('')
+              }}
+            />
+          )}
+        </div>
       </div>
 
       {/* 푸터 */}
-      <footer className="mt-12 text-gray-500 text-sm">
-        <p>Powered by AI | Made by shud</p>
+      <footer className="mt-16 text-gray-600 text-sm">
+        <p>Made by shud</p>
       </footer>
     </div>
   )
