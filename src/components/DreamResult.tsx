@@ -9,8 +9,7 @@ interface DreamResultProps {
 }
 
 export default function DreamResult({ result, dream, onReset }: DreamResultProps) {
-  const [premiumResult, setPremiumResult] = useState<string | null>(null)
-  const [premiumLoading, setPremiumLoading] = useState(false)
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
 
   const handleShare = () => {
     if (navigator.share) {
@@ -26,50 +25,26 @@ export default function DreamResult({ result, dream, onReset }: DreamResultProps
   }
 
   const handlePremium = async () => {
-    setPremiumLoading(true)
+    setCheckoutLoading(true)
     try {
-      const res = await fetch('/api/interpret-premium', {
+      const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dream, paymentVerified: true }), // 테스트용
+        body: JSON.stringify({ dream }),
       })
       const data = await res.json()
-      setPremiumResult(data.interpretation)
+
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
+      } else {
+        alert('결제 페이지를 열 수 없습니다.')
+      }
     } catch (error) {
-      console.error('Premium Error:', error)
-      alert('프리미엄 해몽 중 오류가 발생했습니다.')
+      console.error('Checkout Error:', error)
+      alert('결제 처리 중 오류가 발생했습니다.')
     } finally {
-      setPremiumLoading(false)
+      setCheckoutLoading(false)
     }
-  }
-
-  // 프리미엄 결과 보여주기
-  if (premiumResult) {
-    return (
-      <div className="space-y-8">
-        <div className="text-center">
-          <p className="text-yellow-400 text-sm tracking-widest mb-2">PREMIUM REPORT</p>
-          <h2 className="text-2xl text-white font-light">프리미엄 꿈 해석</h2>
-        </div>
-
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/10 to-transparent rounded-2xl" />
-          <div className="relative bg-black/20 rounded-2xl p-8 border border-yellow-500/30">
-            <div className="text-gray-200 leading-loose whitespace-pre-wrap prose prose-invert max-w-none">
-              {premiumResult}
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={onReset}
-          className="w-full py-4 rounded-xl text-white/70 border border-white/20
-                     hover:bg-white/5 transition-colors"
-        >
-          새로운 꿈 해몽하기
-        </button>
-      </div>
-    )
   }
 
   return (
@@ -99,12 +74,12 @@ export default function DreamResult({ result, dream, onReset }: DreamResultProps
         </p>
         <button
           onClick={handlePremium}
-          disabled={premiumLoading}
+          disabled={checkoutLoading}
           className="w-full py-4 bg-white text-black font-medium
                      rounded-xl hover:bg-gray-100 transition-colors
                      disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {premiumLoading ? '해석 중...' : '프리미엄 해몽 받기 — 테스트'}
+          {checkoutLoading ? '결제 페이지 이동 중...' : '프리미엄 해몽 받기 — $0.50'}
         </button>
       </div>
 
